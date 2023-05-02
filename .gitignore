@@ -2,11 +2,3 @@ __pycache__/
 .DS_Store
 .idea
 !.gitignore
-
-# IMPROVE
-ml.dfs/
-raw/
-scripts/
-notes
-results*
-scores*
