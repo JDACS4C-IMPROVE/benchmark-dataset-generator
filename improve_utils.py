@@ -76,8 +76,8 @@ improve_globals.gene_expression_fname = "cancer_gene_expression.txt"  # cancer f
 
 # Drug features file names
 improve_globals.smiles_file_name = "drug_SMILES.txt"  # drug feature
-improve_globals.mordred_file_name = "mordred.parquet"  # drug feature
-improve_globals.ecfp4_512bit_file_name = "ecfp4_512bit.csv"  # drug feature
+improve_globals.mordred_file_name = "drug_mordred.txt"  # drug feature
+improve_globals.ecfp4_512bit_file_name = "drug_ecfp4_512bit.txt"  # drug feature
 
 # Globals derived from the ones defined above
 improve_globals.raw_data_dir = improve_globals.main_data_dir/improve_globals.raw_data_dir_name # raw_data
@@ -130,7 +130,7 @@ def load_single_drug_response_data(
     # TODO: at this point, this func implements the loading a single source
     df = pd.read_csv(improve_globals.y_file_path, sep=sep)
 
-    import pdb; pdb.set_trace()
+    # import pdb; pdb.set_trace()
     if isinstance(split, int):
         # Get a subset of samples
         ids = load_split_file(source, split, split_type)
@@ -353,6 +353,10 @@ def load_smiles_data(
     src_raw_data_dir : data dir where the raw DRP data is stored
     """
     df = pd.read_csv(improve_globals.smiles_file_path, sep=sep)
+
+    # TODO: updated this after we update the data
+    df.columns = ["improve_chem_id", "smiles"]
+
     if verbose:
         print(f"SMILES data: {df.shape}")
         # print(df.dtypes)
@@ -367,6 +371,7 @@ def load_mordred_descriptor_data(
     Return Mordred descriptors data.
     """
     df = pd.read_csv(improve_globals.mordred_file_path, sep=sep)
+    df = df.set_index(improve_globals.drug_col_name)
     return df
 
 
@@ -377,6 +382,7 @@ def load_morgan_fingerprint_data(
     Return Morgan fingerprints data.
     """
     df = pd.read_csv(improve_globals.ecfp4_512bit_file_path, sep=sep)
+    df = df.set_index(improve_globals.drug_col_name)
     return df
 
 
