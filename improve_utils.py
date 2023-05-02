@@ -52,6 +52,7 @@ improve_globals.infer_dir_name = "infer"        # output from model inference (t
 # Secondary dirs in raw_data
 improve_globals.x_data_dir_name = "x_data"      # feature data
 improve_globals.y_data_dir_name = "y_data"      # target data
+improve_globals.splits_dir_name = "splits"      # splits files
 
 # Column names in the raw data files
 # imp_globals.canc_col_name = "CancID"
@@ -74,7 +75,7 @@ improve_globals.gene_expression_fname = "cancer_gene_expression.txt"  # cancer f
 # ...
 
 # Drug features file names
-improve_globals.smiles_file_name = "drug_SMILES.csv"  # drug feature
+improve_globals.smiles_file_name = "drug_SMILES.txt"  # drug feature
 improve_globals.mordred_file_name = "mordred.parquet"  # drug feature
 improve_globals.ecfp4_512bit_file_name = "ecfp4_512bit.csv"  # drug feature
 
@@ -82,6 +83,7 @@ improve_globals.ecfp4_512bit_file_name = "ecfp4_512bit.csv"  # drug feature
 improve_globals.raw_data_dir = improve_globals.main_data_dir/improve_globals.raw_data_dir_name # raw_data
 improve_globals.x_data_dir   = improve_globals.raw_data_dir/improve_globals.x_data_dir_name    # x_data
 improve_globals.y_data_dir   = improve_globals.raw_data_dir/improve_globals.y_data_dir_name    # y_data
+improve_globals.splits_dir   = improve_globals.raw_data_dir/improve_globals.splits_dir_name    # splits
 improve_globals.models_dir   = improve_globals.raw_data_dir/improve_globals.models_dir_name    # models
 improve_globals.infer_dir    = improve_globals.raw_data_dir/improve_globals.infer_dir_name     # infer
 
@@ -102,12 +104,12 @@ improve_globals.ecfp4_512bit_file_path = improve_globals.x_data_dir/improve_glob
 # -------------------------------------
 # Drug response loaders
 # -------------------------------------
-# def load_rsp_data(src_raw_data_dir: str, y_col_name: str="AUC", verbose: bool=True):
-# def load_single_drug_response_data(src_raw_data_dir: str, y_col_name: str="AUC", verbose: bool=True):
-
 
 def load_single_drug_response_data(
-    source: Union[str, List[str]],
+    # source: Union[str, List[str]],
+    source: str,
+    split: Union[int, None]=None,
+    split_type: Union[str, List[str], None]=None,
     y_col_name: str="auc",
     sep: str="\t",
     verbose: bool=True) -> pd.DataFrame:
@@ -117,16 +119,26 @@ def load_single_drug_response_data(
     sources.
 
     Args:
-        source (str or list of str): DRP source name (str) of multiple sources (list of strings)
+        source (str or list of str): DRP source name (str) or multiple sources (list of strings)
+        split(int or None): split id (int), None (load all samples)
+        split_type (str or None): one of the following: 'train', 'val', 'test'
         y_col_name (str): name of drug response measure/score (e.g., AUC, IC50)
 
     Returns:
         pd.Dataframe: dataframe that contains drug response values
     """
+    # TODO: at this point, this func implements the loading a single source
     df = pd.read_csv(improve_globals.y_file_path, sep=sep)
-    if isinstance(source, str):
-        source = [source]
-    df = df[df[improve_globals.source_col_name].isin(source)]
+
+    import pdb; pdb.set_trace()
+    if isinstance(split, int):
+        # Get a subset of samples
+        ids = load_split_file(source, split, split_type)
+        df = df.loc[ids]
+    else:
+        # Get the full dataset for a given source
+        df = df[df[improve_globals.source_col_name].isin([source])]
+
     cols = [improve_globals.source_col_name,
             improve_globals.drug_col_name,
             improve_globals.canc_col_name,
@@ -137,6 +149,30 @@ def load_single_drug_response_data(
         print(f"Response data: {df.shape}")
         print(df[[improve_globals.canc_col_name, improve_globals.drug_col_name]].nunique())
     return df
+
+
+def load_split_file(
+    source: str,
+    split: Union[int, None]=None,
+    split_type: Union[str, List[str], None]=None) -> list:
+    """
+    Args:
+        source (str): DRP source name (str)
+
+    Returns:
+        ids (list): list of id integers
+    """
+    if isinstance(split_type, str):
+        split_type = [split_type]
+
+    # Check if the split file exists and load
+    ids = []
+    for st in split_type:
+        fpath = improve_globals.splits_dir/f"{source}_split_{split}_{st}.txt"
+        assert fpath.exists(), f"Splits file not found: {fpath}"
+        ids_ = pd.read_csv(fpath, header=None)[0].tolist()
+        ids.extend(ids_)
+    return ids
 
 
 # -------------------------------------
@@ -321,25 +357,30 @@ def load_smiles_data(
         print(f"SMILES data: {df.shape}")
         # print(df.dtypes)
         # print(df.dtypes.value_counts())
-    return smi
-
-improve_globals.smiles_file_name = "drug_SMILES.csv"  # drug feature
-improve_globals.mordred_file_name = "mordred.parquet"  # drug feature
-improve_globals.ecfp4_512bit_file_name = "ecfp4_512bit.csv"  # drug feature
-
-improve_globals.smiles_file_path = improve_globals.x_data_dir/improve_globals.smiles_file_name  # 
-improve_globals.mordred_file_path = improve_globals.x_data_dir/improve_globals.mordred_file_name  # 
-improve_globals.ecfp4_512bit_file_path = improve_globals.x_data_dir/improve_globals.ecfp4_512bit_file_name  # 
-
-def load_mordred_descriptor_data():
-    """
-    Return SMILES data.
-    """
-    df = pd.read_csv()
     return df
 
 
-def get_subset_df(df: pd.DataFrame, ids: list):
+def load_mordred_descriptor_data(
+    sep: str="\t",
+    verbose: bool=True) -> pd.DataFrame:
+    """
+    Return Mordred descriptors data.
+    """
+    df = pd.read_csv(improve_globals.mordred_file_path, sep=sep)
+    return df
+
+
+def load_morgan_fingerprint_data(
+    sep: str="\t",
+    verbose: bool=True) -> pd.DataFrame:
+    """
+    Return Morgan fingerprints data.
+    """
+    df = pd.read_csv(improve_globals.ecfp4_512bit_file_path, sep=sep)
+    return df
+
+
+def get_subset_df(df: pd.DataFrame, ids: list) -> pd.DataFrame:
     """ Get a subset of the input dataframe based on row ids."""
     df = df.loc[ids]
     return df
