@@ -74,7 +74,7 @@ improve_globals.gene_expression_fname = "cancer_gene_expression.txt"  # cancer f
 # ...
 
 # Drug features file names
-improve_globals.smiles_file_name = "smiles.csv"  # drug feature
+improve_globals.smiles_file_name = "drug_SMILES.csv"  # drug feature
 improve_globals.mordred_file_name = "mordred.parquet"  # drug feature
 improve_globals.ecfp4_512bit_file_name = "ecfp4_512bit.csv"  # drug feature
 
@@ -90,14 +90,27 @@ improve_globals.copy_number_file_path = improve_globals.x_data_dir/improve_globa
 improve_globals.dna_methylation_file_path = improve_globals.x_data_dir/improve_globals.dna_methylation_fname  # cancer_DNA_methylation.txt
 improve_globals.gene_expression_file_path = improve_globals.x_data_dir/improve_globals.gene_expression_fname  # cancer_gene_expression.txt
 # TODO: add the other omics types
+# ...
+# ...
+# ...
+improve_globals.smiles_file_path = improve_globals.x_data_dir/improve_globals.smiles_file_name  # 
+improve_globals.mordred_file_path = improve_globals.x_data_dir/improve_globals.mordred_file_name  # 
+improve_globals.ecfp4_512bit_file_path = improve_globals.x_data_dir/improve_globals.ecfp4_512bit_file_name  # 
 # -----------------------------------------------------------------------------
 
 
+# -------------------------------------
+# Drug response loaders
+# -------------------------------------
 # def load_rsp_data(src_raw_data_dir: str, y_col_name: str="AUC", verbose: bool=True):
 # def load_single_drug_response_data(src_raw_data_dir: str, y_col_name: str="AUC", verbose: bool=True):
+
+
 def load_single_drug_response_data(
-    # raw_data_dir: str,
-    source: Union[str, List[str]], y_col_name: str="auc", sep="\t", verbose: bool=True) -> pd.DataFrame:
+    source: Union[str, List[str]],
+    y_col_name: str="auc",
+    sep: str="\t",
+    verbose: bool=True) -> pd.DataFrame:
     """
     Returns datarame with cancer ids, drug ids, and drug response values. Samples
     from the original drug response file are filtered based on the specified
@@ -126,15 +139,38 @@ def load_single_drug_response_data(
     return df
 
 
+# -------------------------------------
+# Omic feature loaders
+# -------------------------------------
+
+"""
+Notes about omics data.
+
+Omics data files are multi-level tables with several column types (generally 3
+or 4), each contains gene names using a different gene identifier system:
+Entrez ID, Gene Symbol, Ensembl ID, TSS
+
+The column levels are not organized in the same order across the different
+omic files.
+
+The level_map dict, in each loader function, encodes the column level and the
+corresponding identifier systems.
+
+For example, in the copy number file the level_map is:  
+level_map = {"Entrez":0, "Gene_Symbol": 1, "Ensembl": 2}
+"""
 
 def set_col_names_in_multilevel_dataframe(
     df: pd.DataFrame,
+    level_map: dict,
     gene_system_identifier: Union[str, List[str]]="Gene_Symbol") -> pd.DataFrame:
-    """ Returns the input dataframe with the multi-level column names renamed as
-    specified in gene_system_identifier.
+    """ Util function that supports loading of the omic data files.
+    Returns the input dataframe with the multi-level column names renamed as
+    specified by the gene_system_identifier arg.
 
     Args:
         df (pd.DataFrame): omics dataframe
+        level_map (dict): encodes the column level and the corresponding identifier systems
         gene_system_identifier (str or list of str): gene identifier system to use
             options: "Entrez", "Gene_Symbol", "Ensembl", "all", or any list
                      combination of ["Entrez", "Gene_Symbol", "Ensembl"]
@@ -144,9 +180,9 @@ def set_col_names_in_multilevel_dataframe(
     """
     df = df.copy()
 
-    level_map = {"Entrez": 0, "Gene_Symbol": 1, "Ensembl": 2}
     level_names = list(level_map.keys())
-    n_levels = len(level_map.keys())
+    level_values = list(level_map.values())
+    n_levels = len(level_names)
     
     if isinstance(gene_system_identifier, list) and len(gene_system_identifier) == 1:
         gene_system_identifier = gene_system_identifier[0]
@@ -155,7 +191,7 @@ def set_col_names_in_multilevel_dataframe(
     # import pdb; pdb.set_trace()
     if isinstance(gene_system_identifier, str):
         if gene_system_identifier == "all":
-            df.columns = df.columns.rename(["Entrez", "Gene_Symbol", "Ensembl"], level=[0, 1, 2])  # assign multi-level col names
+            df.columns = df.columns.rename(level_names, level=level_values)  # assign multi-level col names
         else:
             df.columns = df.columns.get_level_values(level_map[gene_system_identifier])  # retian specific column level
     else:
@@ -163,22 +199,20 @@ def set_col_names_in_multilevel_dataframe(
         set_diff = list(set(gene_system_identifier).difference(set(level_names)))
         assert len(set_diff) == 0, f"Passed unknown gene identifiers: {set_diff}"
         kk = {i: level_map[i] for i in level_map if i in gene_system_identifier}
-        print(list(kk.keys()))
-        print(list(kk.values()))
+        # print(list(kk.keys()))
+        # print(list(kk.values()))
         df.columns = df.columns.rename(list(kk.keys()), level=kk.values())  # assign multi-level col names
         drop_levels = list(set(level_map.values()).difference(set(kk.values())))
         df = df.droplevel(level=drop_levels, axis=1)
-
     return df
 
 
 def load_copy_number_data(
     gene_system_identifier: Union[str, List[str]]="Gene_Symbol",
-    sep="\t", verbose: bool=True) -> pd.DataFrame:
+    sep: str="\t",
+    verbose: bool=True) -> pd.DataFrame:
     """
-    Returns copy number data. Omics data files are multi-level tables with 3
-    column types, each specifies gene names using a different gene identifier
-    system (level 0: Entrez ID, level 1: Gene Symbol, level 2: Ensembl ID).
+    Returns copy number data.
 
     Args:
         gene_system_identifier (str or list of str): gene identifier system to use
@@ -186,15 +220,15 @@ def load_copy_number_data(
                      combination of ["Entrez", "Gene_Symbol", "Ensembl"]
 
     Returns:
-        pd.DataFrame: multi-level dataframe that contains copy number data
+        pd.DataFrame: dataframe with the omic data
     """
-    # level_map describes how the multi-level columns are organized (this is
-    # usually different in different omics datasets)
-    level_map = {"Entrez":0, "Gene_Symbol": 1, "Ensembl": 2}
+    # level_map encodes the relationship btw the column and gene identifier system
+    level_map = {"Entrez": 0, "Gene_Symbol": 1, "Ensembl": 2}
+    header = [i for i in range(len(level_map))]
 
-    df = pd.read_csv(improve_globals.copy_number_file_path, sep=sep, index_col=0, header=[0,1,2])
+    df = pd.read_csv(improve_globals.copy_number_file_path, sep=sep, index_col=0, header=header)
     df.index.name = improve_globals.canc_col_name  # assign index name
-    df = set_col_names_in_multilevel_dataframe(df, gene_system_identifier)
+    df = set_col_names_in_multilevel_dataframe(df, level_map, gene_system_identifier)
     # Test the func
     # d0 = set_col_names_in_multilevel_dataframe(df, "all")
     # d1 = set_col_names_in_multilevel_dataframe(df, "Ensembl")
@@ -204,75 +238,105 @@ def load_copy_number_data(
     # d5 = set_col_names_in_multilevel_dataframe(df, ["Blah", "Ensembl"])
     if verbose:
         print(f"Copy number data: {df.shape}")
+        # print(df.dtypes)
+        # print(df.dtypes.value_counts())
     return df
 
+
+def load_dna_methylation_data(
+    gene_system_identifier: Union[str, List[str]]="Gene_Symbol",
+    sep: str="\t",
+    verbose: bool=True) -> pd.DataFrame:
+    """
+    Returns methylation data.
+
+    Args:
+        gene_system_identifier (str or list of str): gene identifier system to use
+            options: "Entrez", "Gene_Symbol", "Ensembl", "all", or any list
+                     combination of ["Entrez", "Gene_Symbol", "Ensembl"]
+
+    Returns:
+        pd.DataFrame: dataframe with the omic data
+    """
+    # TODO: are there 4 levels??
+    level_map = {"TSS": 0, "Entrez": 1, "Ensembl": 2, "Gene_Symbol": 3}
+    header = [i for i in range(len(level_map))]
+
+    df = pd.read_csv(improve_globals.dna_methylation_file_path, sep=sep, index_col=0, header=header)
+
+    df.index.name = improve_globals.canc_col_name  # assign index name
+    df = set_col_names_in_multilevel_dataframe(df, level_map, gene_system_identifier)
+    if verbose:
+        print(f"DNA methylation data: {df.shape}")
+        # print(df.dtypes)  # TODO: many column are of type 'object'
+        # print(df.dtypes.value_counts())
+    return df
 
 
 def load_gene_expression_data(
     gene_system_identifier: Union[str, List[str]]="Gene_Symbol",
-    sep="\t", verbose: bool=True) -> pd.DataFrame:
+    sep: str="\t",
+    verbose: bool=True) -> pd.DataFrame:
     """
-    Returns gene expression data. Omics data files are multi-level tables with 3
-    column types, each specifies gene names using a different gene identifier
-    system (level 0: Entrez ID, level 1: Gene Symbol, level 2: Ensembl ID).
+    Returns gene expression data.
+
+    Args:
+        gene_system_identifier (str or list of str): gene identifier system to use
+            options: "Entrez", "Gene_Symbol", "Ensembl", "all", or any list
+                     combination of ["Entrez", "Gene_Symbol", "Ensembl"]
+
+    Returns:
+        pd.DataFrame: dataframe with the omic data
     """
-    # level_map describes how the multi-level columns are organized (this is
-    # usually different in different omics datasets)
-    level_map = {"Entrez":0, "Gene_Symbol": 1, "Ensembl": 2}
+    # level_map encodes the relationship btw the column and gene identifier system
+    level_map = {"Ensembl": 0, "Entrez": 1, "Gene_Symbol": 2}
+    header = [i for i in range(len(level_map))]
 
-    cn = pd.read_csv(improve_globals.copy_number_file_path, sep=sep, index_col=0, header=[0,1,2])
-    ge = pd.read_csv(improve_globals.gene_expression_file_path, sep=sep, index_col=0, header=[0,1,2])
+    df = pd.read_csv(improve_globals.gene_expression_file_path, sep=sep, index_col=0, header=header)
 
-
-    df = pd.read_csv(improve_globals.gene_expression_file_path, sep=sep, index_col=0, header=[0,1,2])
     df.index.name = improve_globals.canc_col_name  # assign index name
-    df = set_col_names_in_multilevel_dataframe(df, gene_system_identifier)
+    df = set_col_names_in_multilevel_dataframe(df, level_map, gene_system_identifier)
     if verbose:
         print(f"Gene expression data: {df.shape}")
+        # print(df.dtypes)
+        # print(df.dtypes.value_counts())
     return df
 
 
-def load_dna_methylation(
-    gene_system_identifier: Union[str, List[str]]="Gene_Symbol",
-    sep="\t", verbose: bool=True) -> pd.DataFrame:
-    """
-    """
-    pass
-    return None
 
 
-def get_common_samples(df1: pd.DataFrame, df2: pd.DataFrame, ref_col: str):
-    """
-    IMPROVE-specific func.
-    df1, df2 : dataframes
-    ref_col : the ref column to find the common values
-
-    Returns:
-        df1, df2
-
-    Example:
-        TODO
-    """
-    # Retain (canc, drug) response samples for which we have omic data
-    # TODO: consider making this an IMPROVE func
-    common_ids = list(set(df1[ref_col]).intersection(df2[ref_col]))
-    # print(df1.shape)
-    df1 = df1[ df1[imp_globals.canc_col_name].isin(common_ids) ]
-    # print(df1.shape)
-    # print(df2.shape)
-    df2 = df2[ df2[imp_globals.canc_col_name].isin(common_ids) ]
-    # print(df2.shape)
-    return df1, df2
-
-
-def load_smiles_data(src_raw_data_dir: str):
+# -------------------------------------
+# Drug feature loaders
+# -------------------------------------
+def load_smiles_data(
+    sep: str="\t",
+    verbose: bool=True) -> pd.DataFrame:
     """
     IMPROVE-specific func.
     Read smiles data.
     src_raw_data_dir : data dir where the raw DRP data is stored
     """
-    smi = read_df(src_raw_data_dir/imp_globals.x_data_dir_name/imp_globals.smiles_file_name)
+    df = pd.read_csv(improve_globals.smiles_file_path, sep=sep)
+    if verbose:
+        print(f"SMILES data: {df.shape}")
+        # print(df.dtypes)
+        # print(df.dtypes.value_counts())
     return smi
+
+improve_globals.smiles_file_name = "drug_SMILES.csv"  # drug feature
+improve_globals.mordred_file_name = "mordred.parquet"  # drug feature
+improve_globals.ecfp4_512bit_file_name = "ecfp4_512bit.csv"  # drug feature
+
+improve_globals.smiles_file_path = improve_globals.x_data_dir/improve_globals.smiles_file_name  # 
+improve_globals.mordred_file_path = improve_globals.x_data_dir/improve_globals.mordred_file_name  # 
+improve_globals.ecfp4_512bit_file_path = improve_globals.x_data_dir/improve_globals.ecfp4_512bit_file_name  # 
+
+def load_mordred_descriptor_data():
+    """
+    Return SMILES data.
+    """
+    df = pd.read_csv()
+    return df
 
 
 def get_subset_df(df: pd.DataFrame, ids: list):
@@ -286,6 +350,11 @@ def get_subset_df(df: pd.DataFrame, ids: list):
 
 
 
+
+
+# --------------------------------------------------------------------------
+# Leftovers
+# --------------------------------------------------------------------------
 def get_data_splits(src_raw_data_dir: str, splitdir_name: str,
                     split_file_name: str, rsp_df: pd.DataFrame):
     """
@@ -355,12 +424,28 @@ def get_data_splits(src_raw_data_dir: str, splitdir_name: str,
     return ids
 
 
+def get_common_samples(df1: pd.DataFrame, df2: pd.DataFrame, ref_col: str):
+    """
+    IMPROVE-specific func.
+    df1, df2 : dataframes
+    ref_col : the ref column to find the common values
 
+    Returns:
+        df1, df2
 
-
-
-
-
+    Example:
+        TODO
+    """
+    # Retain (canc, drug) response samples for which we have omic data
+    # TODO: consider making this an IMPROVE func
+    common_ids = list(set(df1[ref_col]).intersection(df2[ref_col]))
+    # print(df1.shape)
+    df1 = df1[ df1[imp_globals.canc_col_name].isin(common_ids) ]
+    # print(df1.shape)
+    # print(df2.shape)
+    df2 = df2[ df2[imp_globals.canc_col_name].isin(common_ids) ]
+    # print(df2.shape)
+    return df1, df2
 
 
 def read_df(fpath: str, sep: str=","):
