@@ -4,7 +4,7 @@ import pandas as pd
 from pathlib import Path
 from math import sqrt
 from scipy import stats
-from typing import List, Union, Optional
+from typing import List, Union, Optional, Tuple
 
 
 fdir = Path(__file__).resolve().parent
@@ -35,7 +35,7 @@ improve_globals = types.SimpleNamespace()
 # TODO:
 # This is CANDLE_DATA_DIR (or something...).
 # How this is going to be passed to the code?
-imp_globals.main_data_dir = fdir/"csa_data"
+improve_globals.main_data_dir = fdir/"csa_data"
 # improve_globals.main_data_dir = fdir/"improve_data_dir"
 # imp_globals.main_data_dir = fdir/"candle_data_dir"
 
@@ -81,6 +81,7 @@ improve_globals.ecfp4_512bit_file_name = "drug_ecfp4_512bit.txt"  # drug feature
 
 # Globals derived from the ones defined above
 improve_globals.raw_data_dir = improve_globals.main_data_dir/improve_globals.raw_data_dir_name # raw_data
+improve_globals.ml_data_dir = improve_globals.main_data_dir/improve_globals.ml_data_dir_name # ml_data
 improve_globals.x_data_dir   = improve_globals.raw_data_dir/improve_globals.x_data_dir_name    # x_data
 improve_globals.y_data_dir   = improve_globals.raw_data_dir/improve_globals.y_data_dir_name    # y_data
 improve_globals.splits_dir   = improve_globals.raw_data_dir/improve_globals.splits_dir_name    # splits
@@ -149,6 +150,74 @@ def load_single_drug_response_data(
         print(f"Response data: {df.shape}")
         print(df[[improve_globals.canc_col_name, improve_globals.drug_col_name]].nunique())
     return df
+
+
+def load_single_drug_response_data_v2(
+    # source: Union[str, List[str]],
+    source: str,
+    # split: Union[int, None]=None,
+    # split_type: Union[str, List[str], None]=None,
+    split_file_name: Union[str, List[str], None]=None,
+    y_col_name: str="auc",
+    sep: str="\t",
+    verbose: bool=True) -> pd.DataFrame:
+    """
+    Returns datarame with cancer ids, drug ids, and drug response values. Samples
+    from the original drug response file are filtered based on the specified
+    sources.
+
+    Args:
+        source (str or list of str): DRP source name (str) or multiple sources (list of strings)
+        split(int or None): split id (int), None (load all samples)
+        split_type (str or None): one of the following: 'train', 'val', 'test'
+        y_col_name (str): name of drug response measure/score (e.g., AUC, IC50)
+
+    Returns:
+        pd.Dataframe: dataframe that contains drug response values
+    """
+    # TODO: currently, this func implements the loading a single source
+    df = pd.read_csv(improve_globals.y_file_path, sep=sep)
+
+    if split_file_name is not None:
+        # Get a subset of samples
+        if isinstance(split_file_name, list) and len(split_file_name) == 0:
+            raise ValueError("Empty list is passed via split_file_name.")
+        if isinstance(split_file_name, str):
+            split_file_name = [split_file_name]
+        ids = load_split_ids(split_file_name)
+        df = df.loc[ids]
+    else:
+        # Get the full dataset for a given source
+        df = df[df[improve_globals.source_col_name].isin([source])]
+
+    cols = [improve_globals.source_col_name,
+            improve_globals.drug_col_name,
+            improve_globals.canc_col_name,
+            y_col_name]
+    df = df[cols]  # [source, drug id, cancer id, response]
+    df = df.reset_index(drop=True)
+    if verbose:
+        print(f"Response data: {df.shape}")
+        print(df[[improve_globals.canc_col_name, improve_globals.drug_col_name]].nunique())
+    return df
+
+
+def load_split_ids(split_file_name: Union[str, List[str]]) -> List[int]:
+    """ Returns list of integers, representing the rows in the response dataset.
+    Args:
+        split_file_name (str or list of str): splits file name or list of file names
+
+    Returns:
+        list: list of integers representing the ids
+    """
+    ids = []
+    for fname in split_file_name:
+        # assert (splitdir/fname).exists(), "split_file_name not found."
+        fpath = improve_globals.splits_dir/fname
+        assert fpath.exists(), f"split_file_name {fname} not found."
+        ids_ = pd.read_csv(fpath, header=None)[0].tolist()
+        ids.extend(ids_)
+    return ids
 
 
 def load_split_file(
