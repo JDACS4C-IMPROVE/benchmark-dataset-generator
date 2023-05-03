@@ -13,7 +13,8 @@ fdir = Path(__file__).resolve().parent
 omics_data_dir = fdir/'../../Data_Curation_final/Curated_CCLE_Multiomics_files' # ap
 
 # benchmark_data_dir = '../CSA_Data/'
-benchmark_data_dir = fdir/'../CSA_Data' # ap
+benchmark_data_dir = fdir/'../csa_data' # ap
+x_data_dir = benchmark_data_dir/'x_data'  # ap
 
 
 
@@ -35,7 +36,7 @@ ge = ge.drop_duplicates()
 ge = replace_ccl_name(data=ge, keep_id=[0, 1, 2], ccl_info=ccl_info)
 ge.iloc[0, 0] = ''
 # ge.to_csv(benchmark_data_dir + 'cancer_gene_expression.txt', header=False, index=False, sep='\t', line_terminator='\r\n')
-ge.to_csv(benchmark_data_dir/'cancer_gene_expression.txt', header=False, index=False, sep='\t', line_terminator='\r\n')
+ge.to_csv(x_data_dir/'cancer_gene_expression.txt', header=False, index=False, sep='\t', line_terminator='\r\n')
 ge = None
 
 # Load copy number data
@@ -47,7 +48,7 @@ cn = cn.drop_duplicates()
 cn = replace_ccl_name(data=cn, keep_id=[0, 1, 2], ccl_info=ccl_info)
 cn.iloc[0, 0] = ''
 # cn.to_csv(benchmark_data_dir + 'cancer_copy_number.txt', header=False, index=False, sep='\t', line_terminator='\r\n')
-cn.to_csv(benchmark_data_dir/'cancer_copy_number.txt', header=False, index=False, sep='\t', line_terminator='\r\n')
+cn.to_csv(x_data_dir/'cancer_copy_number.txt', header=False, index=False, sep='\t', line_terminator='\r\n')
 cn = None
 
 # Load discretized copy number data
@@ -60,7 +61,7 @@ discretized_cn = replace_ccl_name(data=discretized_cn, keep_id=[0, 1, 2], ccl_in
 discretized_cn.iloc[0, 0] = ''
 # discretized_cn.to_csv(benchmark_data_dir + 'cancer_discretized_copy_number.txt', header=False, index=False, sep='\t',
 #           line_terminator='\r\n')
-discretized_cn.to_csv(benchmark_data_dir/'cancer_discretized_copy_number.txt', header=False, index=False, sep='\t',
+discretized_cn.to_csv(x_data_dir/'cancer_discretized_copy_number.txt', header=False, index=False, sep='\t',
           line_terminator='\r\n')
 discretized_cn = None
 
@@ -74,7 +75,7 @@ miRNA = replace_ccl_name(data=miRNA, keep_id=[0], ccl_info=ccl_info)
 miRNA.iloc[0, 0] = ''
 # miRNA.to_csv(benchmark_data_dir + 'cancer_miRNA_expression.txt', header=False, index=False, sep='\t',
 #           line_terminator='\r\n')
-miRNA.to_csv(benchmark_data_dir/'cancer_miRNA_expression.txt', header=False, index=False, sep='\t',
+miRNA.to_csv(x_data_dir/'cancer_miRNA_expression.txt', header=False, index=False, sep='\t',
           line_terminator='\r\n')
 miRNA = None
 
@@ -88,7 +89,7 @@ rppa = replace_ccl_name(data=rppa, keep_id=[0], ccl_info=ccl_info)
 rppa.iloc[0, 0] = ''
 # rppa.to_csv(benchmark_data_dir + 'cancer_RPPA.txt', header=False, index=False, sep='\t',
 #           line_terminator='\r\n')
-rppa.to_csv(benchmark_data_dir/'cancer_RPPA.txt', header=False, index=False, sep='\t',
+rppa.to_csv(x_data_dir/'cancer_RPPA.txt', header=False, index=False, sep='\t',
           line_terminator='\r\n')
 rppa = None
 
@@ -102,7 +103,7 @@ me = replace_ccl_name(data=me, keep_id=[0, 1, 2, 3], ccl_info=ccl_info)
 me.iloc[0, 0] = ''
 # me.to_csv(benchmark_data_dir + 'cancer_DNA_methylation.txt', header=False, index=False, sep='\t',
 #           line_terminator='\r\n')
-me.to_csv(benchmark_data_dir/'cancer_DNA_methylation.txt', header=False, index=False, sep='\t',
+me.to_csv(x_data_dir/'cancer_DNA_methylation.txt', header=False, index=False, sep='\t',
           line_terminator='\r\n')
 me = None
 
@@ -116,7 +117,7 @@ mu_count = replace_ccl_name(data=mu_count, keep_id=[0, 1, 2], ccl_info=ccl_info)
 mu_count.iloc[0, 0] = ''
 # mu_count.to_csv(benchmark_data_dir + 'cancer_mutation_count.txt', header=False, index=False, sep='\t',
 #           line_terminator='\r\n')
-mu_count.to_csv(benchmark_data_dir/'cancer_mutation_count.txt', header=False, index=False, sep='\t',
+mu_count.to_csv(x_data_dir/'cancer_mutation_count.txt', header=False, index=False, sep='\t',
           line_terminator='\r\n')
 mu_count = None
 
@@ -131,7 +132,6 @@ mu = mu.drop_duplicates()
 mu = replace_ccl_name(data=mu, keep_id=list(range(11)), ccl_info=ccl_info)
 # mu.to_csv(benchmark_data_dir + 'cancer_mutation.txt', header=False, index=False, sep='\t',
 #           line_terminator='\r\n')
-mu.to_csv(benchmark_data_dir/'cancer_mutation.txt', header=False, index=False, sep='\t',
+mu.to_csv(x_data_dir/'cancer_mutation.txt', header=False, index=False, sep='\t',
           line_terminator='\r\n')
 mu = None
-

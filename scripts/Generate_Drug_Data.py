@@ -9,11 +9,10 @@ fdir = Path(__file__).resolve().parent  # absolute path to parent dir (can call 
 
 # drug_data_dir = '../../Drug_Data/'
 drug_data_dir = fdir/'../../Drug_Data' # ap
-# drug_data_dir = fdir/'../../drug_data' ## ap
 
 # benchmark_data_dir = '../CSA_Data/'
-benchmark_data_dir = fdir/'../CSA_Data' # ap
-# benchmark_data_dir = fdir/'../csg_data' ## ap
+benchmark_data_dir = fdir/'../csg_data' # ap
+x_data_dir = benchmark_data_dir/'x_data'  # ap
 
 
 
@@ -63,9 +62,9 @@ dd = dd.iloc[id, :]
 # dd.to_csv(benchmark_data_dir + 'drug_descriptor.txt', header=True, index=True, sep='\t', line_terminator='\r\n')
 
 # ap
-ds.to_csv(benchmark_data_dir/'drug_SMILES.txt', header=True, index=True, sep='\t', line_terminator='\r\n')
-df.to_csv(benchmark_data_dir/'drug_fingerprint.txt', header=True, index=True, sep='\t', line_terminator='\r\n')
-dd.to_csv(benchmark_data_dir/'drug_descriptor.txt', header=True, index=True, sep='\t', line_terminator='\r\n')
+ds.to_csv(x_data_dir/'drug_SMILES.txt', header=True, index=True, sep='\t', line_terminator='\r\n')
+df.to_csv(x_data_dir/'drug_ecfp4_nbits512.txt', header=True, index=True, sep='\t', line_terminator='\r\n')
+dd.to_csv(x_data_dir/'drug_mordred_descriptor.txt', header=True, index=True, sep='\t', line_terminator='\r\n')
 
 ## ap
 # ds.to_csv(benchmark_data_dir/'drug_smiles.txt', header=True, index=True, sep='\t', line_terminator='\r\n')

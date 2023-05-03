@@ -24,9 +24,9 @@ auxiliary_data_dir = fdir/'../auxiliary_data' # ap
 
 # benchmark_data_dir = '../CSA_Data/'
 benchmark_data_dir = fdir/'../csa_data' # ap
-y_data_dir = fdir/'../csa_data/y_data'  # ap
-x_data_dir = fdir/'../csa_data/x_data'  # ap
-splits_dir = fdir/'../csa_data/splits'  # ap
+y_data_dir = benchmark_data_dir/'y_data'  # ap
+x_data_dir = benchmark_data_dir/'x_data'  # ap
+splits_dir = benchmark_data_dir/'splits'  # ap
 os.makedirs(benchmark_data_dir, exists_ok=True)
 os.makedirs(y_data_dir, exists_ok=True)
 os.makedirs(x_data_dir, exists_ok=True)
