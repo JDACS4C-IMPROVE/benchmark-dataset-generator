@@ -24,6 +24,13 @@ auxiliary_data_dir = fdir/'../auxiliary_data' # ap
 
 # benchmark_data_dir = '../CSA_Data/'
 benchmark_data_dir = fdir/'../csa_data' # ap
+y_data_dir = fdir/'../csa_data/y_data'  # ap
+x_data_dir = fdir/'../csa_data/x_data'  # ap
+splits_dir = fdir/'../csa_data/splits'  # ap
+os.makedirs(benchmark_data_dir, exists_ok=True)
+os.makedirs(y_data_dir, exists_ok=True)
+os.makedirs(x_data_dir, exists_ok=True)
+os.makedirs(splits_dir, exists_ok=True)
 
 
 
@@ -99,31 +106,33 @@ id = np.intersect1d(np.where(np.isin(res.improve_sample_id, ccl_mapping.improve_
                     np.where(np.isin(res.improve_chem_id, drug_list))[0])
 res = res.iloc[id, :]
 # res.to_csv(benchmark_data_dir + 'response.txt', header=True, index=False, sep='\t', line_terminator='\r\n')
-res.to_csv(benchmark_data_dir/'response.txt', header=True, index=False, sep='\t', line_terminator='\r\n')
+res.to_csv(y_data_dir/'response.txt', header=True, index=False, sep='\t', line_terminator='\r\n')
+
 id = np.where(np.isin(ccl_mapping.improve_sample_id, res.improve_sample_id))[0]
 ccl_mapping = ccl_mapping.iloc[id, :]
 id = np.where(np.isin(ccl_info.improve_sample_id, ccl_mapping.improve_sample_id))[0]
 ccl_info = ccl_info.iloc[id, :].drop_duplicates()
 # ccl_info.to_csv(benchmark_data_dir + 'ccl_info.txt', header=True, index=False, sep='\t', line_terminator='\r\n')
-ccl_info.to_csv(benchmark_data_dir/'ccl_info.txt', header=True, index=False, sep='\t', line_terminator='\r\n')
+ccl_info.to_csv(x_data_dir/'ccl_info.txt', header=True, index=False, sep='\t', line_terminator='\r\n')
+
 id = np.where(np.isin(drug_list, res.improve_chem_id))[0]
 drug_list = drug_list[id]
 id = np.where(np.isin(drug_info.improve_chem_id, drug_list))[0]
 drug_info = drug_info.iloc[id, :].drop_duplicates()
 # drug_info.to_csv(benchmark_data_dir + 'drug_info.txt', header=True, index=False, sep='\t', line_terminator='\r\n')
-drug_info.to_csv(benchmark_data_dir/'drug_info.txt', header=True, index=False, sep='\t', line_terminator='\r\n')
+drug_info.to_csv(x_data_dir/'drug_info.txt', header=True, index=False, sep='\t', line_terminator='\r\n')
 
 study = np.unique(res.source)
 for s in study:
     ids = np.where(res.source == s)[0]
-    pd.DataFrame(ids).to_csv(benchmark_data_dir/(s + '_all.txt'), header=False, index=False, sep='\t',
+    pd.DataFrame(ids).to_csv(splits_dir/(s + '_all.txt'), header=False, index=False, sep='\t',
                              line_terminator='\r\n')
     p = generate_cross_validation_partition(list(range(len(ids))), n_folds=10, n_repeats=1, portions=[8, 1, 1],
                                             random_seed=1)
     for i in range(len(p)):
-        pd.DataFrame(ids[p[i][0]]).to_csv(benchmark_data_dir/(s + '_split_' + str(i) + '_train.txt'), header=False,
+        pd.DataFrame(ids[p[i][0]]).to_csv(splits_dir/(s + '_split_' + str(i) + '_train.txt'), header=False,
                                           index=False, sep='\t', line_terminator='\r\n')
-        pd.DataFrame(ids[p[i][1]]).to_csv(benchmark_data_dir/(s + '_split_' + str(i) + '_val.txt'), header=False,
+        pd.DataFrame(ids[p[i][1]]).to_csv(splits_dir/(s + '_split_' + str(i) + '_val.txt'), header=False,
                                           index=False, sep='\t', line_terminator='\r\n')
-        pd.DataFrame(ids[p[i][2]]).to_csv(benchmark_data_dir/(s + '_split_' + str(i) + '_test.txt'), header=False,
+        pd.DataFrame(ids[p[i][2]]).to_csv(splits_dir/(s + '_split_' + str(i) + '_test.txt'), header=False,
                                           index=False, sep='\t', line_terminator='\r\n')
