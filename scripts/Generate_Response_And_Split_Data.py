@@ -20,10 +20,10 @@ response_data_dir = fdir/'../../Response_Data' # ap
 drug_data_dir = fdir/'../../Drug_Data' # ap
 
 # auxiliary_data_dir = '../Auxiliary_Data/'
-auxiliary_data_dir = fdir/'../Auxiliary_Data' # ap
+auxiliary_data_dir = fdir/'../auxiliary_data' # ap
 
 # benchmark_data_dir = '../CSA_Data/'
-benchmark_data_dir = fdir/'../CSA_Data' # ap
+benchmark_data_dir = fdir/'../csa_data' # ap
 
 
 
@@ -127,7 +127,3 @@ for s in study:
                                           index=False, sep='\t', line_terminator='\r\n')
         pd.DataFrame(ids[p[i][2]]).to_csv(benchmark_data_dir/(s + '_split_' + str(i) + '_test.txt'), header=False,
                                           index=False, sep='\t', line_terminator='\r\n')
-
-
-
-

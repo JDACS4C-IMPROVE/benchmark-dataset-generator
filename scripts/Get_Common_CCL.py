@@ -6,7 +6,7 @@ import numpy as np
 pd.set_option('display.max_columns', None)
 
 omics_data_dir = '../../Data_Curation_final/Curated_CCLE_Multiomics_files/'
-auxiliary_data_dir = '../Auxiliary_Data/'
+auxiliary_data_dir = '../auxiliary_data/'
 
 # Load gene expression data
 ge = pd.read_csv(omics_data_dir + '/CCLE_AID_expression_full.csv', sep=',', engine='c', na_values=['na', '-', ''],
