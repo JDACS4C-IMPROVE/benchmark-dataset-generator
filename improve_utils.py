@@ -35,8 +35,8 @@ improve_globals = types.SimpleNamespace()
 # TODO:
 # This is CANDLE_DATA_DIR (or something...).
 # How this is going to be passed to the code?
-# imp_globals.main_data_dir = fdir/"CSA_Data"  # TODO: rename
-improve_globals.main_data_dir = fdir/"improve_data_dir"
+imp_globals.main_data_dir = fdir/"csa_data"
+# improve_globals.main_data_dir = fdir/"improve_data_dir"
 # imp_globals.main_data_dir = fdir/"candle_data_dir"
 
 # Dir names corresponding to the primary input/output blocks in the pipeline
