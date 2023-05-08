@@ -15,7 +15,7 @@ fdir = Path(__file__).resolve().parent
 # Settings:
 y_col_name = "auc"
 
-import pdb; pdb.set_trace()
+# import pdb; pdb.set_trace()
 # Load drug response data
 # rs = improve_utils.load_single_drug_response_data(source="CCLE", y_col_name=y_col_name)  # load all samples
 # rs = improve_utils.load_single_drug_response_data(source="CCLE", split=0, split_type=["train", "val"])  # combine train and val sets
@@ -64,5 +64,17 @@ print(f"Total unique cells: {rs_tr[ig.canc_col_name].nunique()}")
 print(f"Total unique drugs: {rs_tr[ig.drug_col_name].nunique()}")
 assert len(set(rs_tr[ig.canc_col_name]).intersection(set(ge.index))) == rs_tr[ig.canc_col_name].nunique(), "Something is missing..."
 assert len(set(rs_tr[ig.drug_col_name]).intersection(set(fp.index))) == rs_tr[ig.drug_col_name].nunique(), "Something is missing..."
+
+print("\nAdd model predictions to dataframe and save")
+preds_df = rs_te.copy()
+print(preds_df.head())
+model_preds = rs_te[y_col_name] + np.random.normal(loc=0, scale=0.1, size=rs_te.shape[0])  # DL model predictions
+preds_df[y_col_name + ig.pred_col_name_suffix] = model_preds
+print(preds_df.head())
+import pdb; pdb.set_trace()
+outdir_preds = fdir/"model_preds" # TODO: we will determine later what should be the output dir for model predictions
+os.makedirs(outdir_preds, exist_ok=True)
+outpath = outdir_preds/"test_preds.csv"
+improve_utils.save_preds(preds_df, y_col_name, outpath)
 
 print("Finished.")
