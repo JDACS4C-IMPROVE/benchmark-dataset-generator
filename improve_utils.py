@@ -1,7 +1,7 @@
 import os
 import numpy as np
 import pandas as pd
-from pathlib import Path
+from pathlib import Path, PosixPath
 from math import sqrt
 from scipy import stats
 from typing import List, Union, Optional, Tuple
@@ -60,6 +60,7 @@ improve_globals.splits_dir_name = "splits"      # splits files
 improve_globals.canc_col_name = "improve_sample_id"  # column name that contains the cancer sample ids TODO: rename to sample_col_name
 improve_globals.drug_col_name = "improve_chem_id"    # column name that contains the drug ids
 improve_globals.source_col_name = "source"           # column name that contains source/study names (CCLE, GDSCv1, etc.)
+improve_globals.pred_col_name_suffix = "_pred"            # suffix to predictions col name (example of final col name: auc_pred)
 
 # Response data file name
 improve_globals.y_file_name = "response.txt"  # response data
@@ -455,16 +456,42 @@ def load_morgan_fingerprint_data(
     return df
 
 
+# -------------------------------------
+# Utils
+# -------------------------------------
+def save_preds(df: pd.DataFrame, y_col_name: str, outpath: Union[str, PosixPath]) -> None:
+    """ Save model predictions.
+    This function throws errors if the dataframe does not include the expected
+    columns: canc_col_name, drug_col_name, y_col_name, y_col_name + "_pred"
+
+    Args:
+        df (pd.DataFrame): df with model predictions
+        y_col_name (str): drug response col name (e.g., IC50, AUC)
+        outpath (str or PosixPath): outdir to save the model predictions df
+        
+    Returns:
+        None
+    """
+    # Check that the 4 columns exist
+    assert improve_globals.canc_col_name in df.columns, f"{improve_globals.canc_col_name} was not found in columns."
+    assert improve_globals.drug_col_name in df.columns, f"{improve_globals.drug_col_name} was not found in columns."
+    assert y_col_name in df.columns, f"{y_col_name} was not found in columns."
+    pred_col_name = y_col_name + f"{improve_globals.pred_col_name_suffix}"
+    assert pred_col_name in df.columns, f"{pred_col_name} was not found in columns."
+
+    # Save preds df
+    df.to_csv(outpath, index=False)
+    return None
+
+
+
+
+
+
 def get_subset_df(df: pd.DataFrame, ids: list) -> pd.DataFrame:
     """ Get a subset of the input dataframe based on row ids."""
     df = df.loc[ids]
     return df
-
-
-
-
-
-
 
 
 
