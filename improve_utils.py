@@ -60,7 +60,7 @@ improve_globals.splits_dir_name = "splits"      # splits files
 improve_globals.canc_col_name = "improve_sample_id"  # column name that contains the cancer sample ids TODO: rename to sample_col_name
 improve_globals.drug_col_name = "improve_chem_id"    # column name that contains the drug ids
 improve_globals.source_col_name = "source"           # column name that contains source/study names (CCLE, GDSCv1, etc.)
-improve_globals.pred_col_name_suffix = "_pred"            # suffix to predictions col name (example of final col name: auc_pred)
+improve_globals.pred_col_name_suffix = "_pred"       # suffix to predictions col name (example of final col name: auc_pred)
 
 # Response data file name
 improve_globals.y_file_name = "response.txt"  # response data

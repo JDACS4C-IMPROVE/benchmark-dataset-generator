@@ -64,6 +64,7 @@ print(f"Total unique cells: {rs_tr[ig.canc_col_name].nunique()}")
 print(f"Total unique drugs: {rs_tr[ig.drug_col_name].nunique()}")
 assert len(set(rs_tr[ig.canc_col_name]).intersection(set(ge.index))) == rs_tr[ig.canc_col_name].nunique(), "Something is missing..."
 assert len(set(rs_tr[ig.drug_col_name]).intersection(set(fp.index))) == rs_tr[ig.drug_col_name].nunique(), "Something is missing..."
+assert len(set(rs_tr[ig.drug_col_name]).intersection(set(sm.index))) == rs_tr[ig.drug_col_name].nunique(), "Something is missing..." # TODO: check this!
 
 print("\nAdd model predictions to dataframe and save")
 preds_df = rs_te.copy()
