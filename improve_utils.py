@@ -83,8 +83,8 @@ improve_globals.ecfp4_512bit_file_name = "drug_ecfp4_512bit.txt"  # drug feature
 # Globals derived from the ones defined above
 improve_globals.raw_data_dir = improve_globals.main_data_dir/improve_globals.raw_data_dir_name # raw_data
 improve_globals.ml_data_dir  = improve_globals.main_data_dir/improve_globals.ml_data_dir_name  # ml_data
-improve_globals.models_dir   = improve_globals.raw_data_dir/improve_globals.models_dir_name    # models
-improve_globals.infer_dir    = improve_globals.raw_data_dir/improve_globals.infer_dir_name     # infer
+improve_globals.models_dir   = improve_globals.main_data_dir/improve_globals.models_dir_name   # models
+improve_globals.infer_dir    = improve_globals.main_data_dir/improve_globals.infer_dir_name    # infer
 # -----
 improve_globals.x_data_dir   = improve_globals.raw_data_dir/improve_globals.x_data_dir_name    # x_data
 improve_globals.y_data_dir   = improve_globals.raw_data_dir/improve_globals.y_data_dir_name    # y_data
@@ -177,7 +177,7 @@ def load_single_drug_response_data_v2(
     Returns:
         pd.Dataframe: dataframe that contains drug response values
     """
-    # TODO: currently, this func implements the loading a single source
+    # TODO: currently, this func implements loading a single data source (CCLE or CTRPv2 or ...)
     df = pd.read_csv(improve_globals.y_file_path, sep=sep)
 
     # if split_file_name is not None:
@@ -214,7 +214,6 @@ def load_split_ids(split_file_name: Union[str, List[str]]) -> List[int]:
     """
     ids = []
     for fname in split_file_name:
-        # assert (splitdir/fname).exists(), "split_file_name not found."
         fpath = improve_globals.splits_dir/fname
         assert fpath.exists(), f"split_file_name {fname} not found."
         ids_ = pd.read_csv(fpath, header=None)[0].tolist()
@@ -225,7 +224,7 @@ def load_split_ids(split_file_name: Union[str, List[str]]) -> List[int]:
 def load_split_file(
     source: str,
     split: Union[int, None]=None,
-    split_type: Union[str, List[str], None]=None) -> list:
+    split_type: Union[str, List[str], None]=None) -> List[int]:
     """
     Args:
         source (str): DRP source name (str)
@@ -233,6 +232,7 @@ def load_split_file(
     Returns:
         ids (list): list of id integers
     """
+    # TODO: used in the old version of the rsp loader
     if isinstance(split_type, str):
         split_type = [split_type]
 
@@ -410,8 +410,6 @@ def load_gene_expression_data(
     return df
 
 
-
-
 # -------------------------------------
 # Drug feature loaders
 # -------------------------------------
@@ -457,14 +455,32 @@ def load_morgan_fingerprint_data(
     return df
 
 
-def get_subset_df(df: pd.DataFrame, ids: list) -> pd.DataFrame:
-    """ Get a subset of the input dataframe based on row ids."""
-    df = df.loc[ids]
-    return df
+# -------------------------------------
+# Save data functions
+# -------------------------------------
+def save_preds(df: pd.DataFrame, y_col_name: str, outpath: Union[str, PosixPath]) -> None:
+    """ Save model predictions.
+    This function throws errors if the dataframe does not include the expected
+    columns: canc_col_name, drug_col_name, y_col_name, y_col_name + "_pred"
 
+    Args:
+        df (pd.DataFrame): df with model predictions
+        y_col_name (str): drug response col name (e.g., IC50, AUC)
+        outpath (str or PosixPath): outdir to save the model predictions df
+        
+    Returns:
+        None
+    """
+    # Check that the 4 columns exist
+    assert improve_globals.canc_col_name in df.columns, f"{improve_globals.canc_col_name} was not found in columns."
+    assert improve_globals.drug_col_name in df.columns, f"{improve_globals.drug_col_name} was not found in columns."
+    assert y_col_name in df.columns, f"{y_col_name} was not found in columns."
+    pred_col_name = y_col_name + f"{improve_globals.pred_col_name_suffix}"
+    assert pred_col_name in df.columns, f"{pred_col_name} was not found in columns."
 
-
-
+    # Save preds df
+    df.to_csv(outpath, index=False)
+    return None
 
 
 
@@ -578,6 +594,12 @@ def read_df(fpath: str, sep: str=","):
         df = pd.read_parquet(fpath)
     else:
         df = pd.read_csv(fpath, sep=sep)
+    return df
+
+
+def get_subset_df(df: pd.DataFrame, ids: list) -> pd.DataFrame:
+    """ Get a subset of the input dataframe based on row ids."""
+    df = df.loc[ids]
     return df
 
 
