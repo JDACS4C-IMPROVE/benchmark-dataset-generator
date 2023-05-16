@@ -1,7 +1,7 @@
 import os
 import numpy as np
 import pandas as pd
-from pathlib import Path
+from pathlib import Path, PosixPath
 from math import sqrt
 from scipy import stats
 from typing import List, Union, Optional, Tuple
@@ -60,6 +60,7 @@ improve_globals.splits_dir_name = "splits"      # splits files
 improve_globals.canc_col_name = "improve_sample_id"  # column name that contains the cancer sample ids TODO: rename to sample_col_name
 improve_globals.drug_col_name = "improve_chem_id"    # column name that contains the drug ids
 improve_globals.source_col_name = "source"           # column name that contains source/study names (CCLE, GDSCv1, etc.)
+improve_globals.pred_col_name_suffix = "_pred"       # suffix to predictions col name (example of final col name: auc_pred)
 
 # Response data file name
 improve_globals.y_file_name = "response.txt"  # response data
@@ -81,12 +82,13 @@ improve_globals.ecfp4_512bit_file_name = "drug_ecfp4_512bit.txt"  # drug feature
 
 # Globals derived from the ones defined above
 improve_globals.raw_data_dir = improve_globals.main_data_dir/improve_globals.raw_data_dir_name # raw_data
-improve_globals.ml_data_dir = improve_globals.main_data_dir/improve_globals.ml_data_dir_name # ml_data
+improve_globals.ml_data_dir  = improve_globals.main_data_dir/improve_globals.ml_data_dir_name  # ml_data
+improve_globals.models_dir   = improve_globals.raw_data_dir/improve_globals.models_dir_name    # models
+improve_globals.infer_dir    = improve_globals.raw_data_dir/improve_globals.infer_dir_name     # infer
+# -----
 improve_globals.x_data_dir   = improve_globals.raw_data_dir/improve_globals.x_data_dir_name    # x_data
 improve_globals.y_data_dir   = improve_globals.raw_data_dir/improve_globals.y_data_dir_name    # y_data
 improve_globals.splits_dir   = improve_globals.raw_data_dir/improve_globals.splits_dir_name    # splits
-improve_globals.models_dir   = improve_globals.raw_data_dir/improve_globals.models_dir_name    # models
-improve_globals.infer_dir    = improve_globals.raw_data_dir/improve_globals.infer_dir_name     # infer
 
 improve_globals.y_file_path = improve_globals.y_data_dir/improve_globals.y_file_name           # response.txt
 improve_globals.copy_number_file_path = improve_globals.x_data_dir/improve_globals.copy_number_fname  # cancer_copy_number.txt
@@ -178,17 +180,17 @@ def load_single_drug_response_data_v2(
     # TODO: currently, this func implements the loading a single source
     df = pd.read_csv(improve_globals.y_file_path, sep=sep)
 
-    if split_file_name is not None:
-        # Get a subset of samples
-        if isinstance(split_file_name, list) and len(split_file_name) == 0:
-            raise ValueError("Empty list is passed via split_file_name.")
-        if isinstance(split_file_name, str):
-            split_file_name = [split_file_name]
-        ids = load_split_ids(split_file_name)
-        df = df.loc[ids]
-    else:
-        # Get the full dataset for a given source
-        df = df[df[improve_globals.source_col_name].isin([source])]
+    # if split_file_name is not None:
+    # Get a subset of samples
+    if isinstance(split_file_name, list) and len(split_file_name) == 0:
+        raise ValueError("Empty list is passed via split_file_name.")
+    if isinstance(split_file_name, str):
+        split_file_name = [split_file_name]
+    ids = load_split_ids(split_file_name)
+    df = df.loc[ids]
+    # else:
+    #     # Get the full dataset for a given source
+    #     df = df[df[improve_globals.source_col_name].isin([source])]
 
     cols = [improve_globals.source_col_name,
             improve_globals.drug_col_name,
