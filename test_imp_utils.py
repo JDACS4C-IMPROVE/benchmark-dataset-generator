@@ -54,6 +54,9 @@ print("\nLoad gene expression ...")
 ge = improve_utils.load_gene_expression_data(gene_system_identifier="Gene_Symbol")
 assert len(set(rs_tr[ig.canc_col_name]).intersection(set(ge.index))) == rs_tr[ig.canc_col_name].nunique(), "Something is missing..."
 # mt = improve_utils.load_dna_methylation_data(gene_system_identifier="TSS")
+# mc = improve_utils.load_mutation_count_data(gene_system_identifier="Gene_Symbol")
+# cn_d = improve_utils.load_discretized_copy_number_data(gene_system_identifier="Gene_Symbol")
+# rppa = improve_utils.load_rppa_data(gene_system_identifier="Gene_Symbol")
 
 # Gene selection (LINCS landmark genes)
 # TODO: we'll need to figure out how lincs genes will be provided for models!
@@ -193,7 +196,7 @@ if train:
     improve_utils.save_preds(pred_df, y_col_name, outpath, round_decimals=4)
 
     r2 = improve_utils.r_square(pred_df[y_col_name], y_pred)
-    print(f"R-square (random forest) {r2}")
+    print(f"R-square (random forest) {np.round(r2, 5)}")
 
 
 print("Finished.")

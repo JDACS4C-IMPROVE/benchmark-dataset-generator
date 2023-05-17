@@ -11,7 +11,7 @@ fdir = Path(__file__).resolve().parent  # absolute path to parent dir (can call 
 drug_data_dir = fdir/'../../Drug_Data' # ap
 
 # benchmark_data_dir = '../CSA_Data/'
-benchmark_data_dir = fdir/'../csg_data' # ap
+benchmark_data_dir = fdir/'../csa_data' # ap
 x_data_dir = benchmark_data_dir/'x_data'  # ap
 
 
