@@ -180,7 +180,6 @@ def load_single_drug_response_data_v2(
     # TODO: currently, this func implements loading a single data source (CCLE or CTRPv2 or ...)
     df = pd.read_csv(improve_globals.y_file_path, sep=sep)
 
-    # if split_file_name is not None:
     # Get a subset of samples
     if isinstance(split_file_name, list) and len(split_file_name) == 0:
         raise ValueError("Empty list is passed via split_file_name.")
@@ -192,15 +191,18 @@ def load_single_drug_response_data_v2(
     #     # Get the full dataset for a given source
     #     df = df[df[improve_globals.source_col_name].isin([source])]
 
-    cols = [improve_globals.source_col_name,
-            improve_globals.drug_col_name,
-            improve_globals.canc_col_name,
-            y_col_name]
-    df = df[cols]  # [source, drug id, cancer id, response]
+    # # Get a subset of cols
+    # cols = [improve_globals.source_col_name,
+    #         improve_globals.drug_col_name,
+    #         improve_globals.canc_col_name,
+    #         y_col_name]
+    # df = df[cols]  # [source, drug id, cancer id, response]
+
     df = df.reset_index(drop=True)
     if verbose:
         print(f"Response data: {df.shape}")
-        print(df[[improve_globals.canc_col_name, improve_globals.drug_col_name]].nunique())
+        print(f"Unique cells:  {df[improve_globals.canc_col_name].nunique()}")
+        print(f"Unique drugs:  {df[improve_globals.drug_col_name].nunique()}")
     return df
 
 
@@ -405,14 +407,13 @@ def load_gene_expression_data(
     df = set_col_names_in_multilevel_dataframe(df, level_map, gene_system_identifier)
     if verbose:
         print(f"Gene expression data: {df.shape}")
-        # print(df.dtypes)
-        # print(df.dtypes.value_counts())
     return df
 
 
 # -------------------------------------
 # Drug feature loaders
 # -------------------------------------
+
 def load_smiles_data(
     sep: str="\t",
     verbose: bool=True) -> pd.DataFrame:
@@ -441,6 +442,8 @@ def load_mordred_descriptor_data(
     """
     df = pd.read_csv(improve_globals.mordred_file_path, sep=sep)
     df = df.set_index(improve_globals.drug_col_name)
+    if verbose:
+        print(f"Mordred descriptors data: {df.shape}")
     return df
 
 
@@ -458,7 +461,9 @@ def load_morgan_fingerprint_data(
 # -------------------------------------
 # Save data functions
 # -------------------------------------
-def save_preds(df: pd.DataFrame, y_col_name: str, outpath: Union[str, PosixPath]) -> None:
+
+def save_preds(df: pd.DataFrame, y_col_name: str,
+               outpath: Union[str, PosixPath], round_decimals: int=4) -> None:
     """ Save model predictions.
     This function throws errors if the dataframe does not include the expected
     columns: canc_col_name, drug_col_name, y_col_name, y_col_name + "_pred"
@@ -467,6 +472,7 @@ def save_preds(df: pd.DataFrame, y_col_name: str, outpath: Union[str, PosixPath]
         df (pd.DataFrame): df with model predictions
         y_col_name (str): drug response col name (e.g., IC50, AUC)
         outpath (str or PosixPath): outdir to save the model predictions df
+        round (int): round response values 
         
     Returns:
         None
@@ -478,6 +484,9 @@ def save_preds(df: pd.DataFrame, y_col_name: str, outpath: Union[str, PosixPath]
     pred_col_name = y_col_name + f"{improve_globals.pred_col_name_suffix}"
     assert pred_col_name in df.columns, f"{pred_col_name} was not found in columns."
 
+    # Round
+    df = df.round({y_col_name: round_decimals, pred_col_name: round_decimals})
+
     # Save preds df
     df.to_csv(outpath, index=False)
     return None
@@ -486,9 +495,10 @@ def save_preds(df: pd.DataFrame, y_col_name: str, outpath: Union[str, PosixPath]
 
 
 
-# --------------------------------------------------------------------------
+
+# ==================================================================
 # Leftovers
-# --------------------------------------------------------------------------
+# ==================================================================
 def get_data_splits(
     src_raw_data_dir: str,
     splitdir_name: str,
@@ -561,8 +571,10 @@ def get_data_splits(
     return ids
 
 
-def get_common_samples(df1: pd.DataFrame, df2: pd.DataFrame, ref_col: str) ->
-    Tuple[pd.DataFrame, pd.DataFrame]:
+def get_common_samples(
+    df1: pd.DataFrame,
+    df2: pd.DataFrame,
+    ref_col: str) -> Tuple[pd.DataFrame, pd.DataFrame]:
     """
     Args:
         df1, df2 (pd.DataFrame): dataframes
@@ -624,3 +636,8 @@ def pearson(y, f):
 def spearman(y, f):
     rs = stats.spearmanr(y, f)[0]
     return rs
+
+
+def r_square(y_true, y_pred):
+    from sklearn.metrics import r2_score
+    return r2_score(y_true, y_pred)
