@@ -70,10 +70,10 @@ improve_globals.copy_number_fname = "cancer_copy_number.txt"  # cancer feature
 improve_globals.discretized_copy_number_fname = "cancer_discretized_copy_number.txt"  # cancer feature
 improve_globals.dna_methylation_fname = "cancer_DNA_methylation.txt"  # cancer feature
 improve_globals.gene_expression_fname = "cancer_gene_expression.txt"  # cancer feature
-# TODO: add the other omics types
-# ...
-# ...
-# ...
+improve_globals.miRNA_expression_fname = "cancer_miRNA_expression.txt"  # cancer feature
+improve_globals.mutation_count_fname = "cancer_mutation_count.txt"  # cancer feature
+improve_globals.mutation_fname = "cancer_mutation.txt"  # cancer feature
+improve_globals.rppa_fname = "cancer_RPPA.txt"  # cancer feature
 
 # Drug features file names
 improve_globals.smiles_file_name = "drug_SMILES.txt"  # drug feature
@@ -90,14 +90,20 @@ improve_globals.x_data_dir   = improve_globals.raw_data_dir/improve_globals.x_da
 improve_globals.y_data_dir   = improve_globals.raw_data_dir/improve_globals.y_data_dir_name    # y_data
 improve_globals.splits_dir   = improve_globals.raw_data_dir/improve_globals.splits_dir_name    # splits
 
+# Response
 improve_globals.y_file_path = improve_globals.y_data_dir/improve_globals.y_file_name           # response.txt
+
+# Cancers
 improve_globals.copy_number_file_path = improve_globals.x_data_dir/improve_globals.copy_number_fname  # cancer_copy_number.txt
+improve_globals.discretized_copy_number_file_path = improve_globals.x_data_dir/improve_globals.discretized_copy_number_fname # cancer_discretized_copy_number.txt
 improve_globals.dna_methylation_file_path = improve_globals.x_data_dir/improve_globals.dna_methylation_fname  # cancer_DNA_methylation.txt
 improve_globals.gene_expression_file_path = improve_globals.x_data_dir/improve_globals.gene_expression_fname  # cancer_gene_expression.txt
-# TODO: add the other omics types
-# ...
-# ...
-# ...
+improve_globals.mirna_expression_file_path = improve_globals.x_data_dir/improve_globals.miRNA_expression_fname  # cancer_miRNA_expression.txt
+improve_globals.mutation_count_file_path = improve_globals.x_data_dir/improve_globals.mutation_count_fname # cancer_mutation_count.txt
+improve_globals.mutation_file_path = improve_globals.x_data_dir/improve_globals.mutation_fname # cancer_mutation.txt
+improve_globals.rppa_file_path = improve_globals.x_data_dir/improve_globals.rppa_fname # cancer_RPPA.txt
+
+# Drugs
 improve_globals.smiles_file_path = improve_globals.x_data_dir/improve_globals.smiles_file_name  # 
 improve_globals.mordred_file_path = improve_globals.x_data_dir/improve_globals.mordred_file_name  # 
 improve_globals.ecfp4_512bit_file_path = improve_globals.x_data_dir/improve_globals.ecfp4_512bit_file_name  # 
@@ -332,7 +338,7 @@ def load_copy_number_data(
         pd.DataFrame: dataframe with the omic data
     """
     # level_map encodes the relationship btw the column and gene identifier system
-    level_map = {"Entrez": 0, "Gene_Symbol": 1, "Ensembl": 2}
+    level_map = {"Ensembl": 2, "Entrez": 0, "Gene_Symbol": 1}
     header = [i for i in range(len(level_map))]
 
     df = pd.read_csv(improve_globals.copy_number_file_path, sep=sep, index_col=0, header=header)
@@ -352,6 +358,35 @@ def load_copy_number_data(
     return df
 
 
+def load_discretized_copy_number_data(
+    gene_system_identifier: Union[str, List[str]]="Gene_Symbol",
+    sep: str="\t",
+    verbose: bool=True) -> pd.DataFrame:
+    """
+    Returns discretized copy number data.
+
+    Args:
+        gene_system_identifier (str or list of str): gene identifier system to use
+            options: "Entrez", "Gene_Symbol", "Ensembl", "all", or any list
+                     combination of ["Entrez", "Gene_Symbol", "Ensembl"]
+
+    Returns:
+        pd.DataFrame: dataframe with the omic data
+    """
+    # level_map encodes the relationship btw the column and gene identifier system
+    level_map = {"Ensembl": 2, "Entrez": 0, "Gene_Symbol": 1}
+    header = [i for i in range(len(level_map))]
+
+    df = pd.read_csv(improve_globals.discretized_copy_number_file_path, sep=sep, index_col=0, header=header)
+
+    df.index.name = improve_globals.canc_col_name  # assign index name
+    df = set_col_names_in_multilevel_dataframe(df, level_map, gene_system_identifier)
+    if verbose:
+        print(f"Discretized copy number data: {df.shape}")
+
+    return df
+
+
 def load_dna_methylation_data(
     gene_system_identifier: Union[str, List[str]]="Gene_Symbol",
     sep: str="\t",
@@ -367,8 +402,7 @@ def load_dna_methylation_data(
     Returns:
         pd.DataFrame: dataframe with the omic data
     """
-    # TODO: are there 4 levels??
-    level_map = {"TSS": 0, "Entrez": 1, "Ensembl": 2, "Gene_Symbol": 3}
+    level_map = {"Ensembl": 2, "Entrez": 1, "Gene_Symbol": 3, "TSS": 0}
     header = [i for i in range(len(level_map))]
 
     df = pd.read_csv(improve_globals.dna_methylation_file_path, sep=sep, index_col=0, header=header)
@@ -408,6 +442,64 @@ def load_gene_expression_data(
     if verbose:
         print(f"Gene expression data: {df.shape}")
     return df
+
+
+def load_mirna_expression_data(
+    gene_system_identifier: Union[str, List[str]]="Gene_Symbol",
+    sep: str="\t",
+    verbose: bool=True) -> pd.DataFrame:
+    # TODO
+    raise NotImplementedError("The function is not implemeted yet.")
+    return None
+
+
+def load_mutation_count_data(
+    gene_system_identifier: Union[str, List[str]]="Gene_Symbol",
+    sep: str="\t",
+    verbose: bool=True) -> pd.DataFrame:
+    """
+    Returns mutation count data.
+
+    Args:
+        gene_system_identifier (str or list of str): gene identifier system to use
+            options: "Entrez", "Gene_Symbol", "Ensembl", "all", or any list
+                     combination of ["Entrez", "Gene_Symbol", "Ensembl"]
+
+    Returns:
+        pd.DataFrame: dataframe with the omic data
+    """
+    # level_map encodes the relationship btw the column and gene identifier system
+    level_map = {"Ensembl": 2, "Entrez": 0, "Gene_Symbol": 1}
+    header = [i for i in range(len(level_map))]
+
+    df = pd.read_csv(improve_globals.mutation_count_file_path, sep=sep, index_col=0, header=header)
+
+    df.index.name = improve_globals.canc_col_name  # assign index name
+    df = set_col_names_in_multilevel_dataframe(df, level_map, gene_system_identifier)
+    if verbose:
+        print(f"Mutation count data: {df.shape}")
+    
+    return df
+
+
+def load_mutation_data(
+    gene_system_identifier: Union[str, List[str]]="Gene_Symbol",
+    sep: str="\t",
+    verbose: bool=True) -> pd.DataFrame:
+    # TODO
+    raise NotImplementedError("The function is not implemeted yet.")
+    return None
+
+
+def load_rppa_data(
+    gene_system_identifier: Union[str, List[str]]="Gene_Symbol",
+    sep: str="\t",
+    verbose: bool=True) -> pd.DataFrame:
+    # TODO
+    raise NotImplementedError("The function is not implemeted yet.")
+    return None
+
+
 
 
 # -------------------------------------
