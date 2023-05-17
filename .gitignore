@@ -5,3 +5,5 @@ __pycache__/
 
 # IMPROVE
 csa_data/
+csa_data_original/
+model_preds/
