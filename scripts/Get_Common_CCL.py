@@ -33,6 +33,7 @@ me_ccl = me.index[4:]
 me = None
 
 ccl_ge_mu_cnv = np.intersect1d(np.intersect1d(ge_ccl, mu_ccl), cnv_ccl)
+
 ccl_ge_mu_cnv_me = np.intersect1d(np.intersect1d(ge_ccl, mu_ccl), np.intersect1d(cnv_ccl, me_ccl))
 
 pd.DataFrame(ccl_ge_mu_cnv).to_csv(auxiliary_data_dir + 'ccl_ge_mu_cnv.txt', header=False, index=False, sep='\t',
